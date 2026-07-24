@@ -1,0 +1,172 @@
+/* Claude design language per DESIGN.md (getdesign.md/claude).
+   Tokens: coral #cc785c primary, ink #141413, cream canvas #faf9f5,
+   surface-card #efe9de, hairline #e6dfd8. Serif display headlines
+   (Copernicus/Tiempos voice -> Georgia fallback), humanist sans body
+   16px/1.55, 8px-radius buttons (no pills), 12px-radius cards. */
+
+html, body, [data-testid="stAppViewContainer"] * {
+  font-family: "StyreneB", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* Streamlit renders icons via Material Symbols ligatures — restore their font
+   or icon names render as literal words ("upload"). */
+[data-testid="stIconMaterial"],
+.material-symbols-rounded,
+[data-testid="stAppViewContainer"] .material-symbols-rounded * {
+  font-family: "Material Symbols Rounded" !important;
+}
+
+/* Body copy: 16px / 400 / 1.55 in warm body ink */
+[data-testid="stAppViewContainer"] p,
+[data-testid="stAppViewContainer"] li,
+[data-testid="stMarkdownContainer"] p {
+  font-size: 16px;
+  line-height: 1.55;
+  color: #3d3d3a;
+}
+
+/* Display headings: the serif editorial voice, weight 400, tight tracking */
+h1, h1 span, h1 a {
+  font-family: "Copernicus", "Tiempos Headline", Georgia, "Times New Roman", serif !important;
+  font-weight: 400 !important;
+  font-size: 48px !important;
+  line-height: 1.1 !important;
+  letter-spacing: -1px !important;
+  color: #141413 !important;
+}
+h2, h2 span, h2 a {
+  font-family: "Copernicus", "Tiempos Headline", Georgia, serif !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.5px !important;
+  color: #141413 !important;
+}
+h3, h3 span, h3 a {
+  font-family: "Copernicus", "Tiempos Headline", Georgia, serif !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.3px !important;
+  color: #141413 !important;
+}
+
+/* Caption / muted copy */
+[data-testid="stCaptionContainer"] p {
+  font-size: 16px;
+  color: #6c6a64;
+}
+
+/* Buttons: coral, 8px radius, 500-weight label; darker coral when pressed */
+.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
+  border-radius: 8px !important;
+  padding: 12px 20px !important;
+  height: 40px;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: background-color 0.12s ease !important;
+}
+.stButton > button[kind="primary"] {
+  background-color: #cc785c !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+.stButton > button[kind="primary"]:active {
+  background-color: #a9583e !important;
+}
+.stButton > button[kind="secondary"], .stDownloadButton > button {
+  background-color: #faf9f5 !important;
+  color: #141413 !important;
+  border: 1px solid #e6dfd8 !important;
+}
+.stButton > button:focus-visible, .stDownloadButton > button:focus-visible {
+  outline: 2px solid #cc785c !important;
+  outline-offset: 2px;
+}
+
+/* Cards (expanders): hairline border, 12px radius, canvas fill */
+[data-testid="stExpander"] {
+  border: 1px solid #e6dfd8 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  background-color: #faf9f5;
+}
+[data-testid="stExpander"] summary {
+  font-size: 16px;
+  font-weight: 500;
+  color: #141413;
+}
+
+/* Metric tiles: warm card surface */
+[data-testid="stMetric"] {
+  background-color: #efe9de;
+  border-radius: 12px;
+  padding: 24px;
+}
+[data-testid="stMetricValue"] {
+  font-family: "Copernicus", "Tiempos Headline", Georgia, serif;
+  font-weight: 400;
+  color: #141413;
+}
+[data-testid="stMetricLabel"] p {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c6a64;
+}
+
+/* Tabs: muted labels; active tab becomes a warm card chip */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 8px;
+  border-bottom: 1px solid #e6dfd8;
+  padding-bottom: 6px;
+}
+.stTabs [data-baseweb="tab"] {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6c6a64;
+  background-color: transparent !important;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+.stTabs [aria-selected="true"] {
+  color: #141413 !important;
+  background-color: #efe9de !important;
+}
+.stTabs [data-baseweb="tab-highlight"] {
+  background-color: transparent !important;
+}
+
+/* Inputs: 8px radius, hairline ring, coral focus */
+[data-testid="stTextInput"] input {
+  border-radius: 8px !important;
+  border: 1px solid #e6dfd8 !important;
+  background-color: #faf9f5 !important;
+  padding: 10px 14px !important;
+  font-size: 16px !important;
+  height: 40px;
+  box-shadow: none !important;
+  color: #141413;
+}
+[data-testid="stTextInput"] input:focus {
+  border-color: #cc785c !important;
+}
+[data-testid="stFileUploaderDropzone"] {
+  background-color: #f5f0e8;
+  border: 1px solid #e6dfd8;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+/* Code: JetBrains Mono voice on the dark editor surface */
+[data-testid="stCode"] pre, [data-testid="stCodeBlock"] pre, code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+[data-testid="stCodeBlock"] pre {
+  background-color: #181715 !important;
+  color: #faf9f5 !important;
+  border-radius: 12px !important;
+}
+
+/* Links: coral, single accent for actions */
+a, a:visited { color: #cc785c !important; }
+
+/* Chrome: warm frosted header, quiet alerts */
+[data-testid="stHeader"] { background: rgba(250, 249, 245, 0.85); backdrop-filter: saturate(180%) blur(20px); }
+[data-testid="stAppViewContainer"] .stAlert { border-radius: 12px; box-shadow: none; }

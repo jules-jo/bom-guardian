@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 DEMO_BOM_PATH = Path(__file__).parent / "data" / "demo_bom.csv"
 SAMPLE_FIRMWARE_PATH = Path(__file__).parent / "data" / "sample_firmware.c"
-THEME_CSS_PATH = Path(__file__).parent / "assets" / "apple_theme.css"
+THEME_CSS_PATH = Path(__file__).parent / "assets" / "theme.css"
 DEFAULT_SENTINEL_MPN = "STM32H743ZIT6"
 ANALYSIS_FAILED_MESSAGE = (
     "Analysis failed — likely a network or API hiccup. Please try again in a moment."
