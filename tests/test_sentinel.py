@@ -94,7 +94,7 @@ class FakeClient:
         self.research_answer = research_answer
         self.research_calls = []
 
-    async def search(self, query, count=5, freshness=None):
+    async def search(self, query, count=5, freshness=None, boost=False):
         return self.search_sources
 
     async def contents(self, urls):
@@ -158,7 +158,7 @@ async def test_analyze_no_peripherals_short_circuits():
 @pytest.mark.asyncio
 async def test_analyze_survives_search_failure_via_research_fallback():
     class SearchDownClient(FakeClient):
-        async def search(self, query, count=5, freshness=None):
+        async def search(self, query, count=5, freshness=None, boost=False):
             raise RuntimeError("network down")
 
     client = SearchDownClient(research_answer="I2C: erratum 2.3.1.")
@@ -170,7 +170,7 @@ async def test_analyze_survives_search_failure_via_research_fallback():
 @pytest.mark.asyncio
 async def test_analyze_degrades_visibly_when_everything_fails():
     class AllDownClient(FakeClient):
-        async def search(self, query, count=5, freshness=None):
+        async def search(self, query, count=5, freshness=None, boost=False):
             raise RuntimeError("network down")
 
         async def research(self, question):

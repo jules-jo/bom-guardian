@@ -48,11 +48,23 @@ def _input_key(*parts: str) -> str:
     return digest.hexdigest()
 
 
+def _parse_domains(raw: str) -> tuple[str, ...]:
+    domains = []
+    for token in raw.replace(",", " ").split():
+        domain = token.strip().removeprefix("https://").removeprefix("http://").strip("/")
+        if "." in domain:
+            domains.append(domain)
+    return tuple(domains)
+
+
 def _run_analysis(coro_factory: Callable[[YouComClient], Awaitable]):
     """Run an analysis coroutine with a fresh client; return result or None on failure."""
 
     async def scoped():
-        client = YouComClient(api_key=config.get_api_key())
+        client = YouComClient(
+            api_key=config.get_api_key(),
+            boost_domains=st.session_state.get("boost_domains", config.VENDOR_BOOST_DOMAINS),
+        )
         try:
             return await coro_factory(client)
         finally:
@@ -67,6 +79,19 @@ def _run_analysis(coro_factory: Callable[[YouComClient], Awaitable]):
         st.error(ANALYSIS_FAILED_MESSAGE)
     return None
 
+
+with st.expander("Advanced — trusted vendor domains", expanded=False):
+    st.caption(
+        "Official documents from these domains are ranked higher in errata "
+        "searches (soft preference via You.com domain boosting — nothing is excluded). "
+        "Match this to your approved-vendor list."
+    )
+    raw_domains = st.text_input(
+        "Boosted domains",
+        value=", ".join(config.VENDOR_BOOST_DOMAINS),
+        label_visibility="collapsed",
+    )
+    st.session_state["boost_domains"] = _parse_domains(raw_domains) or config.VENDOR_BOOST_DOMAINS
 
 bom_tab, sentinel_tab = st.tabs(["📋 BOM Risk Radar", "🔬 Silicon Sentinel"])
 

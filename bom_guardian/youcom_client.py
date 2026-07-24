@@ -11,20 +11,36 @@ def _payload_keys(payload: object) -> list[str]:
 
 
 class YouComClient:
-    def __init__(self, api_key: str, client: httpx.AsyncClient | None = None):
+    def __init__(
+        self,
+        api_key: str,
+        client: httpx.AsyncClient | None = None,
+        boost_domains: tuple[str, ...] = config.VENDOR_BOOST_DOMAINS,
+    ):
         self._headers = {"X-API-Key": api_key}
         self._client = client or httpx.AsyncClient(timeout=config.HTTP_TIMEOUT_SECONDS)
+        self._boost_domains = boost_domains
 
     async def aclose(self) -> None:
         await self._client.aclose()
 
     async def search(
-        self, query: str, count: int = config.SEARCH_RESULT_COUNT, freshness: str | None = None
+        self,
+        query: str,
+        count: int = config.SEARCH_RESULT_COUNT,
+        freshness: str | None = None,
+        boost: bool = False,
     ) -> tuple[Source, ...]:
-        """Web+news search; returns deduplicated sources from both sections."""
+        """Web+news search; returns deduplicated sources from both sections.
+
+        With boost=True, the client's vendor domains are soft-preferred in
+        ranking (official documents outrank mirrors) without excluding others.
+        """
         params: dict = {"query": query, "count": count}
         if freshness:
             params["freshness"] = freshness
+        if boost and self._boost_domains:
+            params["boost_domains"] = ",".join(self._boost_domains)
         response = await self._client.get(config.SEARCH_URL, headers=self._headers, params=params)
         response.raise_for_status()
         payload = response.json()

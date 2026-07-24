@@ -25,7 +25,7 @@ class ErrataSection:
 
 async def find_errata_url(client: YouComClient, mpn: str) -> Source | None:
     """Best candidate errata document for the part, vendor PDFs first."""
-    sources = await client.search(f"{mpn} errata sheet device limitations pdf")
+    sources = await client.search(f"{mpn} errata sheet device limitations pdf", boost=True)
     candidates = [
         s
         for s in sources

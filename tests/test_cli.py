@@ -11,7 +11,7 @@ class FakeClient:
     async def aclose(self):
         pass
 
-    async def search(self, query, count=5, freshness=None):
+    async def search(self, query, count=5, freshness=None, boost=False):
         return (
             Source(
                 title="NE555P errata sheet",

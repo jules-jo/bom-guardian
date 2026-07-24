@@ -30,7 +30,7 @@ class FakeClient:
         self.research_calls.append(question)
         return ResearchResult(content=self.research_answer, sources=self.research_sources)
 
-    async def search(self, query, count=5, freshness=None):
+    async def search(self, query, count=5, freshness=None, boost=False):
         self.search_calls.append(query)
         return self.search_sources
 

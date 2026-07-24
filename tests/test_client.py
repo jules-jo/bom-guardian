@@ -7,9 +7,13 @@ import pytest
 from bom_guardian.youcom_client import YouComClient
 
 
-def make_client(payload: dict) -> YouComClient:
-    transport = httpx.MockTransport(lambda request: httpx.Response(200, json=payload))
-    return YouComClient(api_key="test-key", client=httpx.AsyncClient(transport=transport))
+def make_client(payload: dict, seen_requests: list | None = None) -> YouComClient:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if seen_requests is not None:
+            seen_requests.append(request)
+        return httpx.Response(200, json=payload)
+
+    return YouComClient(api_key="test-key", client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
 
 
 @pytest.mark.asyncio
@@ -32,6 +36,35 @@ async def test_search_parses_expected_shape():
     sources = await client.search("q")
     assert len(sources) == 1
     assert sources[0].snippet == "snip"
+
+
+@pytest.mark.asyncio
+async def test_search_boost_sends_vendor_domains():
+    seen: list = []
+    client = make_client({"results": {"web": []}}, seen)
+    await client.search("STM32 errata", boost=True)
+    assert "st.com" in seen[0].url.params.get("boost_domains", "")
+
+
+@pytest.mark.asyncio
+async def test_search_without_boost_omits_domains():
+    seen: list = []
+    client = make_client({"results": {"web": []}}, seen)
+    await client.search("STM32 errata")
+    assert "boost_domains" not in seen[0].url.params
+
+
+@pytest.mark.asyncio
+async def test_search_boost_respects_custom_domains():
+    seen: list = []
+    transport_client = make_client({"results": {"web": []}}, seen)
+    custom = YouComClient(
+        api_key="test-key",
+        client=transport_client._client,
+        boost_domains=("example-vendor.com",),
+    )
+    await custom.search("query", boost=True)
+    assert seen[0].url.params.get("boost_domains") == "example-vendor.com"
 
 
 @pytest.mark.asyncio

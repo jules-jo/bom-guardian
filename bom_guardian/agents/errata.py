@@ -10,7 +10,7 @@ ERRATA_TERMS = ("errata", "device limitation", "known issue", "advisory")
 
 
 async def run(client: YouComClient, component: Component) -> Finding:
-    sources = await client.search(f"{component.mpn} errata sheet device limitations")
+    sources = await client.search(f"{component.mpn} errata sheet device limitations", boost=True)
     relevant = filter_relevant(sources, ERRATA_TERMS, component.mpn)
     if relevant:
         titles = "; ".join(s.title for s in relevant[:3])
