@@ -25,17 +25,19 @@ logger = logging.getLogger(__name__)
 
 DEMO_BOM_PATH = Path(__file__).parent / "data" / "demo_bom.csv"
 SAMPLE_FIRMWARE_PATH = Path(__file__).parent / "data" / "sample_firmware.c"
+THEME_CSS_PATH = Path(__file__).parent / "assets" / "apple_theme.css"
 DEFAULT_SENTINEL_MPN = "STM32H743ZIT6"
 ANALYSIS_FAILED_MESSAGE = (
     "Analysis failed — likely a network or API hiccup. Please try again in a moment."
 )
 
 st.set_page_config(page_title="BOM Guardian", page_icon="🛡️", layout="wide")
-st.title("🛡️ BOM Guardian")
+st.markdown(f"<style>{THEME_CSS_PATH.read_text()}</style>", unsafe_allow_html=True)
+st.title("BOM Guardian")
 st.caption(
-    "Paste a bill of materials, get a live, citation-backed risk report: "
-    "lifecycle/EOL status, published errata, and supply signals — powered by "
-    "You.com Search, Contents, and Research APIs."
+    "Know what's going to bite your bill of materials — before it ships. "
+    "Live, citation-backed lifecycle, errata, and supply intelligence, "
+    "powered by You.com."
 )
 
 
