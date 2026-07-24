@@ -6,6 +6,10 @@ from . import config
 from .models import ResearchResult, Source
 
 
+def _payload_keys(payload: object) -> list[str]:
+    return sorted(payload)[:5] if isinstance(payload, dict) else [type(payload).__name__]
+
+
 class YouComClient:
     def __init__(self, api_key: str, client: httpx.AsyncClient | None = None):
         self._headers = {"X-API-Key": api_key}
@@ -23,7 +27,10 @@ class YouComClient:
             params["freshness"] = freshness
         response = await self._client.get(config.SEARCH_URL, headers=self._headers, params=params)
         response.raise_for_status()
-        results = response.json().get("results", {})
+        payload = response.json()
+        if not isinstance(payload, dict) or "results" not in payload:
+            raise ValueError(f"Unexpected search response shape: keys={_payload_keys(payload)}")
+        results = payload.get("results") or {}
         sources = []
         seen_urls = set()
         for section in ("web", "news"):
@@ -58,7 +65,10 @@ class YouComClient:
             timeout=config.RESEARCH_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
-        output = response.json().get("output", {})
+        payload = response.json()
+        if not isinstance(payload, dict) or "output" not in payload:
+            raise ValueError(f"Unexpected research response shape: keys={_payload_keys(payload)}")
+        output = payload.get("output", {})
         if not isinstance(output, dict):
             return ResearchResult(content=str(output))
         sources = tuple(

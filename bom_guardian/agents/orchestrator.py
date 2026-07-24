@@ -9,7 +9,11 @@ from ..report import score_risk
 from ..youcom_client import YouComClient
 from . import availability, errata, lifecycle
 
-AGENTS = (lifecycle.run, errata.run, availability.run)
+AGENTS = (
+    (lifecycle.AGENT_NAME, lifecycle.run),
+    (errata.AGENT_NAME, errata.run),
+    (availability.AGENT_NAME, availability.run),
+)
 
 ProgressCallback = Callable[[Component, ComponentReport], None]
 
@@ -20,13 +24,11 @@ def _error_finding(agent_name: str, error: BaseException) -> Finding:
 
 async def analyze_component(client: YouComClient, component: Component) -> ComponentReport:
     results = await asyncio.gather(
-        *(agent(client, component) for agent in AGENTS), return_exceptions=True
+        *(run(client, component) for _, run in AGENTS), return_exceptions=True
     )
     findings = tuple(
-        result
-        if isinstance(result, Finding)
-        else _error_finding(agent.__module__.rsplit(".", 1)[-1], result)
-        for agent, result in zip(AGENTS, results)
+        result if isinstance(result, Finding) else _error_finding(name, result)
+        for (name, _), result in zip(AGENTS, results)
     )
     return ComponentReport(component=component, findings=findings, risk=score_risk(findings))
 

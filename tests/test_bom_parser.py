@@ -52,3 +52,18 @@ def test_component_limit_enforced():
     rows = "\n".join(f"PART{i}" for i in range(60))
     with pytest.raises(BomParseError, match="limit"):
         parse_bom_csv("mpn\n" + rows)
+
+
+def test_oversized_csv_rejected_before_parsing():
+    with pytest.raises(BomParseError, match="too large"):
+        parse_bom_csv("mpn\n" + "X" * 300_000)
+
+
+def test_utf8_bom_marker_tolerated():
+    components = parse_bom_csv("﻿mpn,qty\nNE555P,2\n")
+    assert components[0].mpn == "NE555P"
+
+
+def test_zero_or_negative_qty_rejected():
+    with pytest.raises(BomParseError, match="at least 1"):
+        parse_bom_csv("mpn,qty\nNE555P,0\n")

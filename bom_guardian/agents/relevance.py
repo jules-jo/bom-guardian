@@ -33,8 +33,11 @@ def _mpn_key(mpn: str) -> str:
 
 
 def mentions_component(source: Source, mpn: str) -> bool:
+    key = _mpn_key(mpn)
+    if not key:
+        return False  # empty mpn must not degrade the filter to accept-everything
     haystack = _normalize(f"{source.title} {source.url} {source.snippet}")
-    return _mpn_key(mpn) in haystack
+    return key in haystack
 
 
 def filter_relevant(sources: Iterable[Source], terms: Iterable[str], mpn: str) -> tuple[Source, ...]:

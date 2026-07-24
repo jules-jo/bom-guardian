@@ -70,6 +70,32 @@ def test_component_markdown_shows_source_snippet():
     assert "Known I2C issue." in render_component_markdown(report)
 
 
+def test_source_title_link_injection_is_escaped():
+    hostile = Source(
+        title="Errata](https://real.test)[Download fix](https://evil.test/payload",
+        url="https://real.test/errata",
+        snippet="](https://evil.test) inline",
+    )
+    report = ComponentReport(
+        component=Component(mpn="NE555P"),
+        findings=(finding(agent="errata", signal=True, sources=(hostile,)),),
+        risk=RiskLevel.MEDIUM,
+    )
+    markdown = render_component_markdown(report)
+    assert "[Download fix](https://evil.test/payload" not in markdown
+    assert "](https://evil.test)" not in markdown
+
+
+def test_non_http_url_rendered_as_plain_text():
+    bad = Source(title="Click me", url="javascript:alert(1)")
+    report = ComponentReport(
+        component=Component(mpn="NE555P"),
+        findings=(finding(agent="errata", signal=True, sources=(bad,)),),
+        risk=RiskLevel.MEDIUM,
+    )
+    assert "javascript:" not in render_component_markdown(report)
+
+
 def test_bom_markdown_sorts_high_risk_first():
     low = ComponentReport(Component(mpn="LOWPART"), (finding(),), RiskLevel.LOW)
     high = ComponentReport(Component(mpn="HIGHPART"), (finding(),), RiskLevel.HIGH)

@@ -21,10 +21,11 @@ PROMPT_TEMPLATE = (
 )
 
 STATUS_PATTERN = re.compile(r"STATUS:\s*(ACTIVE|NRND|EOL|UNKNOWN)", re.IGNORECASE)
+STATUS_SEARCH_WINDOW_CHARS = 300  # verdict is required on the first line; allow preamble noise
 
 
 def parse_status(research_markdown: str) -> LifecycleStatus:
-    match = STATUS_PATTERN.search(research_markdown[:300])
+    match = STATUS_PATTERN.search(research_markdown[:STATUS_SEARCH_WINDOW_CHARS])
     if not match:
         return LifecycleStatus.UNKNOWN
     return LifecycleStatus(match.group(1).upper())
