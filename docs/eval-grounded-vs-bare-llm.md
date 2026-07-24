@@ -35,4 +35,43 @@ from manufacturer documents.
 One-liner: *"The model knows how the world was. You.com tells our agents how it
 is — and hands you the document to prove it."*
 
-Cost of the grounded run: ~$0.02/part.
+## Cost: You.com API vs. LLM + vendor web-search tool
+
+Could this pipeline be rebuilt on a frontier LLM's built-in web-search tool
+(Anthropic/OpenAI/Gemini)? Yes — nothing here is categorically impossible
+elsewhere. The differences are cost shape and architecture.
+
+**BOM Guardian per-part cost (measured):**
+
+| Agent | Call | Cost | LLM tokens |
+|-------|------|------|-----------|
+| Lifecycle | 1 Research call | $0.012 | none billed to us (bundled) |
+| Errata | 1 Search | $0.005 | zero — deterministic Python filter |
+| Availability | 1 Search | $0.005 | zero — deterministic Python filter |
+| **Total** | | **~$0.022** | |
+
+**Same pipeline on a frontier LLM + its web-search tool (estimated):**
+the lifecycle agent becomes an agentic loop — 3–6 searches at ~$10/1k
+(~$0.03–0.06) plus 20–50k tokens of read-and-reconcile on a Sonnet-class
+model (~$0.10–0.20). The errata/availability agents can no longer be LLM-free
+(the search tool only exists inside an LLM call): ~$0.03–0.06 each.
+**Realistic total: $0.15–0.30/part — roughly 5–10x more.**
+
+At demo scale the difference is irrelevant (cents either way). At product
+scale it decides viability: a 1,000-part BOM re-checked monthly is ~$22/mo
+on this pipeline vs. ~$150–300/mo rebuilt on vendor search tools; across the
+~50 BOMs a mid-size hardware company manages, ~$1.1k/mo vs. ~$10k/mo.
+
+Honest caveats:
+1. The gap is mostly Research-API-vs-hand-rolled-loop. A cheap search API
+   (e.g. Tavily) + small model could narrow it to 2–3x.
+2. Assumes quality parity, verified here only by spot checks (which included
+   the hard cases above).
+3. Ignores engineering cost of building/maintaining the agentic loop — which
+   favors the managed API further.
+
+Architectural corollary: because retrieval is a standalone API rather than a
+tool inside one vendor's chat loop, two of the three agents run with **no LLM
+at all** (deterministic, unit-tested, token-free), freshness windows are API
+parameters rather than prompt suggestions, and the data layer is
+model-vendor-independent.
