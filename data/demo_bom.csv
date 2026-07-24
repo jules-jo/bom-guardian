@@ -1,0 +1,7 @@
+mpn,manufacturer,description,qty
+STM32H743ZIT6,STMicroelectronics,Cortex-M7 MCU 480MHz,1
+MPU-6050,TDK InvenSense,6-axis IMU,2
+EP2C5T144C8N,Intel/Altera,Cyclone II FPGA,1
+ATMEGA328P-PU,Microchip,8-bit AVR MCU,3
+DS3231SN,Analog Devices,RTC with TCXO,1
+NE555P,Texas Instruments,Timer IC,4
