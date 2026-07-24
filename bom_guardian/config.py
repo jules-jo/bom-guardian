@@ -11,6 +11,8 @@ SEARCH_URL = "https://ydc-index.io/v1/search"
 CONTENTS_URL = "https://ydc-index.io/v1/contents"
 RESEARCH_URL = "https://api.you.com/v1/research"
 
+# Valid values: ulow, lite, standard, deep, exhaustive, frontier.
+# Below "standard", lifecycle verdicts get flaky (miss vendor PDN/PCN notices).
 RESEARCH_EFFORT = "standard"
 SEARCH_RESULT_COUNT = 5
 MAX_CONCURRENT_COMPONENTS = 4

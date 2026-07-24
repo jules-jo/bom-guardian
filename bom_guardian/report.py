@@ -1,8 +1,20 @@
 """Risk scoring and markdown rendering for component reports."""
 
-from .models import ComponentReport, Finding, LifecycleStatus, RiskLevel
+from .models import ComponentReport, Finding, LifecycleStatus, RiskLevel, Source
 
 RISK_ICONS = {RiskLevel.HIGH: "🔴", RiskLevel.MEDIUM: "🟡", RiskLevel.LOW: "🟢"}
+
+MAX_SOURCES_PER_FINDING = 5
+MAX_SNIPPET_CHARS = 160
+
+
+def _render_source(source: Source) -> str:
+    line = f"- [{source.title}]({source.url})"
+    if source.snippet:
+        snippet = source.snippet[:MAX_SNIPPET_CHARS].rstrip()
+        ellipsis = "…" if len(source.snippet) > MAX_SNIPPET_CHARS else ""
+        line += f" — {snippet}{ellipsis}"
+    return line
 
 
 def score_risk(findings: tuple[Finding, ...]) -> RiskLevel:
@@ -31,7 +43,7 @@ def render_component_markdown(component_report: ComponentReport) -> str:
         lines.append(finding.summary)
         if finding.sources:
             lines.append("")
-            lines.extend(f"- [{s.title}]({s.url})" for s in finding.sources[:5])
+            lines.extend(_render_source(s) for s in finding.sources[:MAX_SOURCES_PER_FINDING])
     return "\n".join(lines)
 
 

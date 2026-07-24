@@ -3,6 +3,7 @@
 from .. import config
 from ..models import Component, Finding
 from ..youcom_client import YouComClient
+from .relevance import filter_relevant
 
 AGENT_NAME = "availability"
 
@@ -14,9 +15,7 @@ async def run(client: YouComClient, component: Component) -> Finding:
         f"{component.mpn} shortage OR allocation OR \"lead time\" OR discontinued",
         freshness=config.NEWS_FRESHNESS,
     )
-    relevant = tuple(
-        s for s in sources if any(term in s.title.lower() for term in SHORTAGE_TERMS)
-    )
+    relevant = filter_relevant(sources, SHORTAGE_TERMS, component.mpn)
     if relevant:
         titles = "; ".join(s.title for s in relevant[:3])
         summary = f"Recent supply signals in the last {config.NEWS_FRESHNESS}: {titles}"

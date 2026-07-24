@@ -29,6 +29,15 @@ class Component:
 class Source:
     title: str
     url: str
+    snippet: str = ""
+
+
+@dataclass(frozen=True)
+class ResearchResult:
+    """Output of the Research API: cited markdown plus the sources behind it."""
+
+    content: str
+    sources: tuple[Source, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)

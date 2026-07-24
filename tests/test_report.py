@@ -55,6 +55,21 @@ def test_component_markdown_includes_sources_and_risk():
     assert "https://x.test/e" in markdown
 
 
+def test_component_markdown_shows_source_snippet():
+    report = ComponentReport(
+        component=Component(mpn="NE555P"),
+        findings=(
+            finding(
+                agent="errata",
+                signal=True,
+                sources=(Source("Errata sheet", "https://x.test/e", snippet="Known I2C issue."),),
+            ),
+        ),
+        risk=RiskLevel.MEDIUM,
+    )
+    assert "Known I2C issue." in render_component_markdown(report)
+
+
 def test_bom_markdown_sorts_high_risk_first():
     low = ComponentReport(Component(mpn="LOWPART"), (finding(),), RiskLevel.LOW)
     high = ComponentReport(Component(mpn="HIGHPART"), (finding(),), RiskLevel.HIGH)

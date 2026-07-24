@@ -3,7 +3,7 @@
 import httpx
 
 from . import config
-from .models import Source
+from .models import ResearchResult, Source
 
 
 class YouComClient:
@@ -31,7 +31,13 @@ class YouComClient:
                 url = item.get("url", "")
                 if url and url not in seen_urls:
                     seen_urls.add(url)
-                    sources.append(Source(title=item.get("title", url), url=url))
+                    sources.append(
+                        Source(
+                            title=item.get("title") or url,
+                            url=url,
+                            snippet=item.get("description") or "",
+                        )
+                    )
         return tuple(sources)
 
     async def contents(self, urls: list[str]) -> list[dict]:
@@ -43,8 +49,8 @@ class YouComClient:
         response.raise_for_status()
         return response.json()
 
-    async def research(self, question: str) -> str:
-        """Citation-backed synthesis. Returns markdown with [[n]] citations."""
+    async def research(self, question: str) -> ResearchResult:
+        """Citation-backed synthesis: markdown with [[n]] citations plus its sources."""
         response = await self._client.post(
             config.RESEARCH_URL,
             headers=self._headers,
@@ -53,6 +59,15 @@ class YouComClient:
         )
         response.raise_for_status()
         output = response.json().get("output", {})
-        if isinstance(output, dict):
-            return output.get("content", "")
-        return str(output)
+        if not isinstance(output, dict):
+            return ResearchResult(content=str(output))
+        sources = tuple(
+            Source(
+                title=item.get("title") or item["url"],
+                url=item["url"],
+                snippet=next(iter(item.get("snippets") or []), ""),
+            )
+            for item in output.get("sources", [])
+            if item.get("url")
+        )
+        return ResearchResult(content=output.get("content", ""), sources=sources)

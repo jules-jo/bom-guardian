@@ -4,6 +4,7 @@ Run: streamlit run app.py
 """
 
 import asyncio
+import itertools
 from pathlib import Path
 
 import streamlit as st
@@ -12,7 +13,7 @@ from bom_guardian import config
 from bom_guardian.bom_parser import BomParseError, parse_bom_csv
 from bom_guardian.agents.orchestrator import analyze_bom
 from bom_guardian.models import RiskLevel
-from bom_guardian.report import RISK_ICONS, render_component_markdown
+from bom_guardian.report import RISK_ICONS, render_bom_markdown, render_component_markdown
 from bom_guardian.youcom_client import YouComClient
 
 DEMO_BOM_PATH = Path(__file__).parent / "data" / "demo_bom.csv"
@@ -45,16 +46,15 @@ if csv_text:
             {"MPN": c.mpn, "Manufacturer": c.manufacturer, "Description": c.description, "Qty": c.qty}
             for c in components
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
     if st.button(f"Analyze {len(components)} components", type="primary"):
         progress_bar = st.progress(0.0, text="Fanning out agents...")
-        completed_count = 0
+        completed_counter = itertools.count(1)
 
         def on_progress(component, component_report):
-            nonlocal completed_count
-            completed_count += 1
+            completed_count = next(completed_counter)
             progress_bar.progress(
                 completed_count / len(components),
                 text=f"{component.mpn}: {component_report.risk.value} "
@@ -68,15 +68,24 @@ if csv_text:
             finally:
                 await client.aclose()
 
-        reports = asyncio.run(run_analysis())
+        st.session_state["reports"] = asyncio.run(run_analysis())
         progress_bar.empty()
 
+    reports = st.session_state.get("reports")
+    if reports:
         high = [r for r in reports if r.risk == RiskLevel.HIGH]
         medium = [r for r in reports if r.risk == RiskLevel.MEDIUM]
         col1, col2, col3 = st.columns(3)
         col1.metric("🔴 High risk", len(high))
         col2.metric("🟡 Medium risk", len(medium))
         col3.metric("🟢 Low risk", len(reports) - len(high) - len(medium))
+
+        st.download_button(
+            "Download report (Markdown)",
+            data=render_bom_markdown(reports),
+            file_name="bom-guardian-report.md",
+            mime="text/markdown",
+        )
 
         order = {RiskLevel.HIGH: 0, RiskLevel.MEDIUM: 1, RiskLevel.LOW: 2}
         for report in sorted(reports, key=lambda r: order[r.risk]):

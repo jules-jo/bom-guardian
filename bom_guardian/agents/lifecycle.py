@@ -9,10 +9,14 @@ AGENT_NAME = "lifecycle"
 
 PROMPT_TEMPLATE = (
     "You are checking the production lifecycle of the electronic component "
-    "{mpn}{manufacturer_clause}. The FIRST line of your answer must be exactly one of: "
+    "{mpn}{manufacturer_clause}. Specifically search for official manufacturer "
+    "Product Discontinuance Notifications (PDN), Product Change Notices (PCN), "
+    "end-of-life announcements, and NRND markings covering this part or its "
+    "family; distributor stock alone does not prove a part is active. "
+    "The FIRST line of your answer must be exactly one of: "
     "STATUS: ACTIVE, STATUS: NRND, STATUS: EOL, or STATUS: UNKNOWN. "
-    "Then explain: current lifecycle status, any product change notices (PCN) or "
-    "end-of-life announcements with dates, and if the part is NRND or EOL, suggest "
+    "Then explain: current lifecycle status, any PCN or end-of-life "
+    "announcements with dates, and if the part is NRND or EOL, suggest "
     "up to 3 drop-in or near-drop-in replacement part numbers. Cite sources."
 )
 
@@ -28,13 +32,14 @@ def parse_status(research_markdown: str) -> LifecycleStatus:
 
 async def run(client: YouComClient, component: Component) -> Finding:
     manufacturer_clause = f" by {component.manufacturer}" if component.manufacturer else ""
-    answer = await client.research(
+    result = await client.research(
         PROMPT_TEMPLATE.format(mpn=component.mpn, manufacturer_clause=manufacturer_clause)
     )
-    status = parse_status(answer)
+    status = parse_status(result.content)
     return Finding(
         agent=AGENT_NAME,
-        summary=answer,
+        summary=result.content,
+        sources=result.sources,
         status=status,
         signal=status in (LifecycleStatus.NRND, LifecycleStatus.EOL),
     )
