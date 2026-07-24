@@ -2,6 +2,9 @@
 
 **Live, citation-backed risk radar for your bill of materials.**
 
+🌐 **[Live app](https://bom-guardian.onrender.com)** (Render) ·
+[![Run on Replit](https://replit.com/badge/github/jules-jo/bom-guardian)](https://replit.com/new/github/jules-jo/bom-guardian)
+
 Component obsolescence tracking is still a manual, error-prone chore: EOL notices
 hide in PCN PDFs, errata sheets get published quietly, and supply shocks show up
 in trade news before they show up in your distributor portal. BOM Guardian points
