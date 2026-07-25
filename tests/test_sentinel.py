@@ -148,6 +148,43 @@ async def test_analyze_falls_back_to_research_when_doc_unparseable():
 
 
 @pytest.mark.asyncio
+async def test_llamaparse_rescues_unparseable_document(monkeypatch):
+    from bom_guardian.sentinel import analyzer
+
+    async def fake_parse(url):
+        return ERRATA_MARKDOWN
+
+    monkeypatch.setattr(analyzer, "parse_pdf_url", fake_parse)
+    client = FakeClient(search_sources=(ERRATA_PDF_SOURCE,), contents_markdown="")
+    report = await analyze(client, "STM32H743ZIT6", SAMPLE_CODE)
+    assert [m.hit.name for m in report.matches] != []
+    assert report.parsed_via == "llamaparse"
+    assert client.research_calls == []  # document grounding succeeded, no research needed
+    assert "parsed with LlamaParse" in render_markdown(report)
+
+
+@pytest.mark.asyncio
+async def test_contents_success_skips_llamaparse(monkeypatch):
+    from bom_guardian.sentinel import analyzer
+
+    async def exploding_parse(url):
+        raise AssertionError("LlamaParse must not be called when Contents succeeds")
+
+    monkeypatch.setattr(analyzer, "parse_pdf_url", exploding_parse)
+    client = FakeClient(search_sources=(ERRATA_PDF_SOURCE,), contents_markdown=ERRATA_MARKDOWN)
+    report = await analyze(client, "STM32H743ZIT6", SAMPLE_CODE)
+    assert report.parsed_via == "contents"
+
+
+@pytest.mark.asyncio
+async def test_pdf_parse_noop_without_api_key(monkeypatch):
+    from bom_guardian.sentinel.pdf_parse import parse_pdf_url
+
+    monkeypatch.delenv("LLAMA_CLOUD_API_KEY", raising=False)
+    assert await parse_pdf_url("https://vendor.test/errata.pdf") == ""
+
+
+@pytest.mark.asyncio
 async def test_analyze_no_peripherals_short_circuits():
     client = FakeClient()
     report = await analyze(client, "NE555P", "int main(void) { return 0; }")

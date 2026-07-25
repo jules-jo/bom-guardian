@@ -20,6 +20,7 @@ from .errata_doc import (
     match_sections,
     split_sections,
 )
+from .pdf_parse import parse_pdf_url
 from .peripherals import ERRATA_ALIASES, PeripheralHit, extract_peripherals
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class SentinelReport:
     matches: tuple[PeripheralMatch, ...]
     fallback_summary: str = ""
     fallback_sources: tuple[Source, ...] = field(default_factory=tuple)
+    parsed_via: str = ""  # "contents" or "llamaparse" when document grounding succeeded
     error: str = ""
 
 
@@ -63,12 +65,18 @@ async def analyze(client: YouComClient, mpn: str, code: str) -> SentinelReport:
         logger.warning("Errata search failed for %s: %s", mpn, exc)
 
     sections: tuple[ErrataSection, ...] = ()
+    parsed_via = ""
     if errata_source is not None:
         try:
             markdown = await fetch_errata_markdown(client, errata_source.url)
             sections = split_sections(markdown)
+            parsed_via = "contents" if sections else ""
         except Exception as exc:
             logger.warning("Errata fetch failed for %s (%s): %s", mpn, errata_source.url, exc)
+        if not sections:
+            llama_markdown = await parse_pdf_url(errata_source.url)
+            sections = split_sections(llama_markdown)
+            parsed_via = "llamaparse" if sections else ""
 
     matches = tuple(
         PeripheralMatch(hit=hit, sections=matched)
@@ -77,7 +85,11 @@ async def analyze(client: YouComClient, mpn: str, code: str) -> SentinelReport:
     )
     if matches:
         return SentinelReport(
-            mpn=mpn, peripherals=peripherals, errata_source=errata_source, matches=matches
+            mpn=mpn,
+            peripherals=peripherals,
+            errata_source=errata_source,
+            matches=matches,
+            parsed_via=parsed_via,
         )
 
     peripheral_names = ", ".join(hit.name for hit in peripherals)
@@ -112,7 +124,8 @@ def render_markdown(report: SentinelReport) -> str:
     used = ", ".join(f"{h.name} (line {h.line_number})" for h in report.peripherals)
     lines.append(f"**Peripherals used by your firmware:** {used}\n")
     if report.errata_source:
-        lines.append(f"**Errata document:** {render_link(report.errata_source)}\n")
+        parser_note = " · parsed with LlamaParse" if report.parsed_via == "llamaparse" else ""
+        lines.append(f"**Errata document:** {render_link(report.errata_source)}{parser_note}\n")
     if report.matches:
         lines.append(f"**⚠️ {len(report.matches)} peripheral(s) you use appear in the errata:**")
         for match in report.matches:
